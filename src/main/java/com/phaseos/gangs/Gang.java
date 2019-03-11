@@ -1,6 +1,8 @@
 package com.phaseos.gangs;
 
 import com.phaseos.customcells.CustomCells;
+import com.phaseos.utils.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -94,33 +96,53 @@ public class Gang {
             return null;
     }
 
+    /**
+     * Creates and fills all member fields.
+     *
+     * @param name   the name of the new gang.
+     * @param leader
+     */
     void create(String name, UUID leader) {
 
-        if (!name.matches("[^a-zA-Z0-9]"))
+        if (!name.matches("[^a-zA-Z0-9]") || plugin.getConfig().getStringList("gangs.bannedNames").stream().anyMatch(str -> str.equalsIgnoreCase(name))) {
+            Bukkit.getPlayer(leader).sendMessage(StringUtils.fmt("&cInvalid gang name."));
             return;
+        }
 
         String base = UUID.randomUUID().toString() + ".";
-        gangData.set(base + "name", name);
+
         this.name = name;
+        gangData.set(base + "name", name);
+
         this.size = plugin.getConfig().getInt("gangs.minSize");
         gangData.set(base + "size", this.size);
+
         this.power = 0;
         gangData.set(base + "power", 0);
+
         this.tokens = 0;
         gangData.set(base + "tokens", 0);
+
         List<String> list = new ArrayList<>();
         list.add(leader.toString());
-        gangData.set(base + "members", list);
         this.members = list;
+        gangData.set(base + "members", list);
+
+        this.leader = leader;
         gangData.set(base + "leader", leader.toString());
+
         List<String> gangPerms = new ArrayList<>(Arrays.asList(CustomCells.defaultPermissions));
+        this.permissions = CustomCells.defaultPermissions;
         gangData.set(base + "permissions", gangPerms);
+
         String[] cellSize = plugin.getConfig().getStringList("cell.sizes").get(0).split("x");
         this.dimensions[0] = Integer.valueOf(cellSize[0]);
         this.dimensions[1] = Integer.valueOf(cellSize[1]);
         gangData.set(base + "cellSize", this.dimensions[0] + "x" + this.dimensions[1]);
+
         this.bankSize = plugin.getConfig().getIntegerList("bank.sizes").get(0);
         gangData.set(base + "bankSize", this.bankSize);
+
         GangDatabase db = new GangDatabase();
         db.save();
         db.load();
@@ -151,22 +173,18 @@ public class Gang {
 
     private void fillData() {
 
-        if (exists(gangId)) {
-
-            String base = gangId.toString() + ".";
-            this.name = gangData.getString(base + "name");
-            this.size = gangData.getInt(base + "size");
-            this.tokens = gangData.getInt(base + "tokens");
-            this.members = gangData.getStringList(base + "members");
-            this.power = gangData.getInt(base + "power");
-            this.permissions = (String[]) gangData.getStringList(base + "permissions").toArray();
-            String[] dimensionStr = gangData.getString(base + "cellSize").split("x");
-            for (int i = 0; i < dimensionStr.length; i++)
-                this.dimensions[i] = Integer.valueOf(dimensionStr[i]);
-            this.bankSize = gangData.getInt(base + "bankSize");
-            this.leader = UUID.fromString(gangData.getString(base + "leader"));
-
-        }
+        String base = gangId.toString() + ".";
+        this.name = gangData.getString(base + "name");
+        this.size = gangData.getInt(base + "size");
+        this.tokens = gangData.getInt(base + "tokens");
+        this.members = gangData.getStringList(base + "members");
+        this.power = gangData.getInt(base + "power");
+        this.permissions = (String[]) gangData.getStringList(base + "permissions").toArray();
+        String[] dimensionStr = gangData.getString(base + "cellSize").split("x");
+        for (int i = 0; i < dimensionStr.length; i++)
+            this.dimensions[i] = Integer.valueOf(dimensionStr[i]);
+        this.bankSize = gangData.getInt(base + "bankSize");
+        this.leader = UUID.fromString(gangData.getString(base + "leader"));
 
     }
 
@@ -218,6 +236,18 @@ public class Gang {
     public void setBankSize(int bankSize) {
         this.bankSize = bankSize;
         gangData.set(gangId.toString() + ".bankSize", bankSize);
+        GangDatabase db = new GangDatabase();
+        db.save();
+        db.load();
+    }
+
+    public UUID getLeader() {
+        return leader;
+    }
+
+    public void setLeader(UUID leader) {
+        this.leader = leader;
+        gangData.set(gangId.toString() + ".leader", leader.toString());
         GangDatabase db = new GangDatabase();
         db.save();
         db.load();

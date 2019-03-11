@@ -18,7 +18,6 @@ public final class CustomCells extends JavaPlugin {
     private static Inventory mainGui;
     private static Inventory upgradesGui;
     private static Inventory commandsGui;
-    private static Inventory permissionsGui;
 
     @Override
     public void onEnable() {
@@ -30,8 +29,13 @@ public final class CustomCells extends JavaPlugin {
                 "\n\033[0;37m[\033[0;31mCustomCells v" + getClass().getPackage().getImplementationVersion() + " written by Jonathan Conlin. Software and source code are licensed and require permission for editing.\033[0;37m]\n\n\033[0m");
 
         getEconomy().setup();
-        new Gang.GangDatabase().save();
-        new GangMember.MemberDatabase().save();
+        Gang.GangDatabase gangDb = new Gang.GangDatabase();
+        gangDb.save();
+        gangDb.load();
+        GangMember.MemberDatabase memberDb = new GangMember.MemberDatabase();
+        memberDb.save();
+        memberDb.load();
+
         File file = new File("plugins/customcells/config.yml");
 
         if (file.exists())
@@ -49,13 +53,26 @@ public final class CustomCells extends JavaPlugin {
         mainGui = gui.mainGui();
         upgradesGui = gui.upgradesGui();
         commandsGui = gui.commandsGui();
-        //TODO: permissionsGUI here
 
     }
 
     @Override
     public void onDisable() {
         getEconomy().save();
+        Gang.GangDatabase db = new Gang.GangDatabase();
+        db.save();
+    }
+
+    public static Inventory getMainGui() {
+        return mainGui;
+    }
+
+    public static Inventory getUpgradesGui() {
+        return upgradesGui;
+    }
+
+    public static Inventory getCommandsGui() {
+        return commandsGui;
     }
 
     public GangEconomy getEconomy() {

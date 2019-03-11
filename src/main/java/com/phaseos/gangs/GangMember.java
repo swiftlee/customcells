@@ -213,7 +213,7 @@ public class GangMember {
         memberData.set(memberId.toString() + ".gangId", gangId.toString());
     }
 
-    enum Rank {
+    public enum Rank {
         RECRUIT, COMMANDER, COLEADER, LEADER;
 
         @Override

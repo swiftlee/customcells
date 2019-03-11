@@ -1,8 +1,10 @@
 package com.phaseos.utils;
 
 import com.phaseos.customcells.CustomCells;
+import com.phaseos.gangs.GangMember;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;

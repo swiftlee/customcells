@@ -132,9 +132,6 @@ commands_gui:
     - 'PROMOTE:&ePromote:Control who can promote members.'
     - 'DEMOTE:&eDemote:Control who can demote members.'
 
-permissions_gui:
-  title: '{commandName}'
-
 # The different sizes of the island depending on your tier in order.
 cell:
   sizes:

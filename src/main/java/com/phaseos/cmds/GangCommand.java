@@ -50,7 +50,7 @@ public class GangCommand extends Command {
                 return;
             }
 
-            p.openInventory(gui);
+            p.openInventory(CustomCells.getMainGui());
 
         } else
             sender.sendMessage(StringUtils.fmt("&cYou cannot execute this command."));
@@ -205,6 +205,7 @@ public class GangCommand extends Command {
                 player.sendMessage(StringUtils.fmt("&cThere was no gang listed under the name \"" + ap.get(0) + "\"."));
             else {
                 String info = "";
+
             }
 
         }
