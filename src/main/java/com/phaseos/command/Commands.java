@@ -39,7 +39,7 @@ public class Commands implements Listener {
         this.playerNotFound = prefix + ChatColor.RED + "The player '%player%' is not online!";
         this.noNumber = prefix + ChatColor.RED + "Entered number '%num%' is invalid!";
         this.noBoolean = prefix + ChatColor.RED + "Entered truth value '%value%' is invalid!";
-        this.noPermissions = prefix + ChatColor.RED + "You're not permitted to use this command!";
+        this.noPermissions = prefix + ChatColor.RED + "You are not permitted to use this command!";
     }
 
     public <T> Commands addDependencyInjector(Class<T> clazz, Function<String, ? extends T> function, String condition) {

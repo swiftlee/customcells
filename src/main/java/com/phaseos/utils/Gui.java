@@ -1,10 +1,9 @@
 package com.phaseos.utils;
 
 import com.phaseos.customcells.CustomCells;
-import com.phaseos.gangs.GangMember;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -56,7 +55,7 @@ public class Gui {
         upgradeCellMeta.setDisplayName(StringUtils.fmt(plugin.getConfig().getString("gang_gui.upgrade_cell.name")));
         upgradeCell.setItemMeta(upgradeCellMeta);
 
-        ItemStack listCell = new ItemStack(Material.valueOf(plugin.getConfig().getString("gang_gui.list_cell.material")), 1);
+        ItemStack listCell = new ItemStack(Material.valueOf(plugin.getConfig().getString("gang_gui.list_cell.material")), 1, (byte) 3);
         ItemMeta listCellMeta = listCell.getItemMeta();
         listCellMeta.setDisplayName(StringUtils.fmt(plugin.getConfig().getString("gang_gui.list_cell.name")));
         listCell.setItemMeta(listCellMeta);

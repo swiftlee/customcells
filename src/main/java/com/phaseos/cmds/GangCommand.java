@@ -1,34 +1,33 @@
 package com.phaseos.cmds;
 
-import com.phaseos.customcells.CustomCells;
 import com.phaseos.command.ArgumentParser;
 import com.phaseos.command.Command;
 import com.phaseos.command.PlayerCommand;
+import com.phaseos.customcells.CustomCells;
 import com.phaseos.gangs.Gang;
 import com.phaseos.gangs.GangMember;
-import com.phaseos.utils.Color;
-import com.phaseos.utils.Gui;
 import com.phaseos.utils.StringUtils;
+
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.ItemMergeEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.UUID;
 
 public class GangCommand extends Command {
 
     private CustomCells plugin;
-    public static final String commandsHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Gang Commands &8]&m----------------");
-    public static final String listHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Gangs List &8]&m----------------");
-    public static final String topHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Top Gangs &8]&m----------------");
+    private static final String commandsHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Gang Commands &8]&m----------------");
+    private static final String listHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Gangs List &8]&m----------------");
+    private static final String topHeader = StringUtils.fmt("&8&m----------------&r&8[ &6Top Gangs &8]&m----------------");
+    private static final String infoHeader = StringUtils.fmt("&8&m----------------&r&8[ &6%gang% &8]&m----------------");
 
     public GangCommand(CustomCells plugin) {
         super("gang", "g");
@@ -96,33 +95,38 @@ public class GangCommand extends Command {
                 return;
             }
 
-            SortedSet<String> names = new TreeSet<>();
-            int page = ap.getInt(0);
-            int counter = 1;
-            final int pageLength = 10;
+            if (ap.hasExactly(1)) {
 
-            for (String key : Gang.GangDatabase.getYml().getKeys(false)) {
+                SortedSet<String> names = new TreeSet<>();
+                int page = ap.getInt(1);
+                int counter = 1;
+                final int pageLength = 10;
 
-                if (counter >= (page * pageLength) - (pageLength + 1))
-                    names.add(Gang.GangDatabase.getYml().getString(key + ".name"));
-                counter++;
+                for (String key : Gang.GangDatabase.getYml().getKeys(false)) {
 
-            }
+                    if (counter >= (page * pageLength) - (pageLength + 1))
+                        names.add(Gang.GangDatabase.getYml().getString(key + ".name"));
+                    counter++;
 
-            if (names.isEmpty()) {
-                player.sendMessage(listHeader + "\n\n" + StringUtils.fmt("&6This page is empty!"));
-                return;
-            }
+                }
 
-            StringBuilder pageContent = new StringBuilder();
-            pageContent.append(listHeader).append("\n\n");
-            for (String line : names) {
+                if (names.isEmpty()) {
+                    player.sendMessage(listHeader + "\n\n" + StringUtils.fmt("&6This page is empty!"));
+                    return;
+                }
 
-                pageContent.append(StringUtils.fmt("&8- &6")).append(line).append("\n");
+                StringBuilder pageContent = new StringBuilder();
+                pageContent.append(listHeader).append("\n\n");
+                for (String line : names) {
 
-            }
-            pageContent.append(StringUtils.fmt("\n&8Page number: &6" + page));
-            player.sendMessage(String.valueOf(pageContent));
+                    pageContent.append(StringUtils.fmt("&8- &6")).append(line).append("\n");
+
+                }
+                pageContent.append(StringUtils.fmt("\n&8Page number: &6" + page));
+                player.sendMessage(String.valueOf(pageContent));
+
+            } else
+                player.sendMessage(StringUtils.fmt("&cYou entered too many arguments, try: /list <number>"));
 
         }
 
@@ -144,31 +148,36 @@ public class GangCommand extends Command {
                 return;
             }
 
-            Map<Integer, String> unsortedGangs = new HashMap<>();
-            YamlConfiguration db = Gang.GangDatabase.getYml();
+            if (ap.hasExactly(0)) {
 
-            for (String gang : db.getKeys(false)) {
-                String base = gang + ".";
-                unsortedGangs.put(db.getInt(base + "power"), db.getString(base + "name"));
-            }
+                Map<Integer, String> unsortedGangs = new HashMap<>();
+                YamlConfiguration db = Gang.GangDatabase.getYml();
 
-            Map<Integer, String> sortedGangs = new TreeMap<>(Comparator.reverseOrder());
-            sortedGangs.putAll(unsortedGangs);
+                for (String gang : db.getKeys(false)) {
+                    String base = gang + ".";
+                    unsortedGangs.put(db.getInt(base + "power"), db.getString(base + "name"));
+                }
 
-            StringBuilder message = new StringBuilder(topHeader + "\n\n");
-            int counter = 1;
+                Map<Integer, String> sortedGangs = new TreeMap<>(Comparator.reverseOrder());
+                sortedGangs.putAll(unsortedGangs);
 
-            for (Map.Entry entry : sortedGangs.entrySet()) {
-                message.append(counter).append(". ").append(entry.getValue()).append("\n");
+                StringBuilder message = new StringBuilder(topHeader + "\n\n");
+                int counter = 1;
 
-                if (counter == 10)
-                    break;
+                for (Map.Entry entry : sortedGangs.entrySet()) {
+                    message.append(counter).append(". ").append(entry.getValue()).append("\n");
 
-                counter++;
+                    if (counter == 10)
+                        break;
 
-            }
+                    counter++;
 
-            player.sendMessage(String.valueOf(message));
+                }
+
+                player.sendMessage(String.valueOf(message));
+
+            } else
+                player.sendMessage(StringUtils.fmt("&cInvalid format, try: /top"));
 
         }
 
@@ -190,23 +199,38 @@ public class GangCommand extends Command {
                 return;
             }
 
-            YamlConfiguration db = Gang.GangDatabase.getYml();
-            Gang gang = null;
-            for (String gangId : db.getKeys(false)) {
+            if (ap.hasExactly(1)) {
 
-                if (db.getString(gangId + ".name").equalsIgnoreCase(ap.get(0))) {
-                    gang = new Gang(UUID.fromString(gangId));
-                    break;
+                YamlConfiguration db = Gang.GangDatabase.getYml();
+                Gang gang = null;
+                for (String gangId : db.getKeys(false)) {
+
+                    if (db.getString(gangId + ".name").equalsIgnoreCase(ap.get(1))) {
+                        gang = new Gang(UUID.fromString(gangId));
+                        break;
+                    }
+
                 }
 
-            }
+                if (gang == null)
+                    player.sendMessage(StringUtils.fmt("&cThere was no gang listed under the name \"" + ap.get(1) + "\"."));
+                else {
+                    StringBuilder info = new StringBuilder(infoHeader.replace("%gang%", gang.getName()));
+                    info.append("\n&8Leader: &6").append(Bukkit.getOfflinePlayer(gang.getLeader()));
+                    info.append("\n\n&8Power: &6").append(gang.getPower()).append("\n");
+                    int counter = 1;
+                    for (String member : gang.getMembers()) {
+                        info.append("&e").append(Bukkit.getOfflinePlayer(UUID.fromString(member)).getName()).append(", ");
+                        if (counter != 1 && counter % 3 == 0)
+                            info.append("\n");
+                        counter++;
+                    }
+                    player.sendMessage(StringUtils.fmt(String.valueOf(info)));
+                }
 
-            if (gang == null)
-                player.sendMessage(StringUtils.fmt("&cThere was no gang listed under the name \"" + ap.get(0) + "\"."));
-            else {
-                String info = "";
+            } else
+                player.sendMessage(StringUtils.fmt("&cInvalid arguments, please enter only one gang name."));
 
-            }
 
         }
 
@@ -227,6 +251,17 @@ public class GangCommand extends Command {
                 player.sendMessage(StringUtils.fmt("&cYou do not have permission to use this command!"));
                 return;
             }
+
+            if (!GangMember.hasGang(player.getUniqueId())) {
+
+                if (Gang.exists(ap.get(1))) {
+                    Gang gang = new Gang(plugin);
+                    gang.create(ap.get(1), player.getUniqueId());
+                } else
+                    player.sendMessage(StringUtils.fmt("&cA gang with that name already exists."));
+
+            } else
+                player.sendMessage(StringUtils.fmt("&cYou must leave your current gang in order to do that!"));
 
         }
 

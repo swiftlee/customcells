@@ -2,6 +2,7 @@ package com.phaseos.gangs;
 
 import com.phaseos.customcells.CustomCells;
 import com.phaseos.utils.StringUtils;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -12,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class Gang {
 
@@ -96,13 +96,31 @@ public class Gang {
             return null;
     }
 
+    public static boolean exists(UUID gangId) {
+
+        return gangData.contains(gangId.toString());
+
+    }
+
+    public static boolean exists(String gangName) {
+        for (String key : gangData.getKeys(true)) {
+            if (key.equals(gangName))
+                return true;
+        }
+        return false;
+    }
+
+    public static String[] getPermissionFromGroup(GangMember.Rank rank) {
+        String rankStr = rank.toString();
+        return (String[]) Arrays.stream(CustomCells.defaultPermissions).filter(perm -> perm.split("\\[")[0].equalsIgnoreCase(rankStr)).toArray();
+    }
+
     /**
      * Creates and fills all member fields.
      *
-     * @param name   the name of the new gang.
-     * @param leader
+     * @param name the name of the new gang.
      */
-    void create(String name, UUID leader) {
+    public void create(String name, UUID leader) {
 
         if (!name.matches("[^a-zA-Z0-9]") || plugin.getConfig().getStringList("gangs.bannedNames").stream().anyMatch(str -> str.equalsIgnoreCase(name))) {
             Bukkit.getPlayer(leader).sendMessage(StringUtils.fmt("&cInvalid gang name."));
@@ -149,28 +167,6 @@ public class Gang {
 
     }
 
-    public void setDimensions(int[] dimensions) {
-        this.dimensions = dimensions;
-        gangData.set(gangId.toString() + ".cellSize", dimensions[0] + "x" + dimensions[1]);
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
-    }
-
-    public static boolean exists(UUID gangId) {
-
-        return gangData.contains(gangId.toString());
-
-    }
-
-    public static boolean exists(String gangName) {
-        for (String key : gangData.getKeys(true)) {
-            if (key.equals(gangName))
-                return true;
-        }
-        return false;
-    }
-
     private void fillData() {
 
         String base = gangId.toString() + ".";
@@ -192,17 +188,16 @@ public class Gang {
         return permissions;
     }
 
-    public static String[] getPermissionFromGroup(GangMember.Rank rank) {
-        String rankStr = rank.toString();
-        return (String[]) Arrays.stream(CustomCells.defaultPermissions).filter(perm -> perm.split("\\[")[0].equalsIgnoreCase(rankStr)).collect(Collectors.toList()).toArray();
-    }
-
     public void setPermissions(String[] permissions) {
         gangData.set(gangId.toString() + ".permissions", permissions);
         this.permissions = permissions;
         GangDatabase db = new GangDatabase();
         db.save();
         db.load();
+    }
+
+    public int getSize() {
+        return members.size();
     }
 
     public int getPower() {
@@ -219,6 +214,14 @@ public class Gang {
 
     public int[] getDimensions() {
         return dimensions;
+    }
+
+    public void setDimensions(int[] dimensions) {
+        this.dimensions = dimensions;
+        gangData.set(gangId.toString() + ".cellSize", dimensions[0] + "x" + dimensions[1]);
+        GangDatabase db = new GangDatabase();
+        db.save();
+        db.load();
     }
 
     public Location getHome() {
@@ -248,6 +251,30 @@ public class Gang {
     public void setLeader(UUID leader) {
         this.leader = leader;
         gangData.set(gangId.toString() + ".leader", leader.toString());
+        GangDatabase db = new GangDatabase();
+        db.save();
+        db.load();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+        gangData.set(gangId.toString() + ".name", name);
+        GangDatabase db = new GangDatabase();
+        db.save();
+        db.load();
+    }
+
+    public List<String> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<String> members) {
+        this.members = members;
+        gangData.set(gangId.toString() + ".members", members);
         GangDatabase db = new GangDatabase();
         db.save();
         db.load();

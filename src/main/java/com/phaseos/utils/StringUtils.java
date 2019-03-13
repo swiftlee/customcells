@@ -1,8 +1,7 @@
 package com.phaseos.utils;
 
+import org.apache.commons.lang.text.StrBuilder;
 import org.bukkit.ChatColor;
-
-import java.util.List;
 
 public class StringUtils {
 
@@ -10,6 +9,17 @@ public class StringUtils {
 
         return ChatColor.translateAlternateColorCodes('&', msg);
 
+    }
+
+    public static String capitalize(String str) {
+        int strLen;
+        if (str == null || (strLen = str.length()) == 0) {
+            return str;
+        }
+        return new StrBuilder(strLen)
+                .append(Character.toTitleCase(str.charAt(0)))
+                .append(str.substring(1))
+                .toString();
     }
 
 }

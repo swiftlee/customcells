@@ -74,7 +74,7 @@ gang_gui:
     slot: 12
     name: '&9&lCell Upgrades'
   list_cell:
-    material: 'HEAD'
+    material: 'SKULL_ITEM'
     slot: 14
     name: '&b&lGang List'
   perms_cell:
@@ -142,8 +142,8 @@ cell:
 # The different sizes of the bank depending on your tier in order.
 bank:
   sizes:
-    - 10
-    - 20
-    - 30
-    - 45
     - 50
+    - 100
+    - 500
+    - 1000
+    - 5000

@@ -78,6 +78,10 @@ public class GangMember {
 
     }
 
+    public int getTimePlayed() {
+        return memberData.getInt(memberId.toString() + ".playTime");
+    }
+
     public static Gang getGang(UUID playerId) {
 
         GangMember gangMember = new GangMember(playerId);
@@ -158,10 +162,6 @@ public class GangMember {
 
     public UUID getMemberId() {
         return memberId;
-    }
-
-    public void setMemberId(UUID memberId) {
-        this.memberId = memberId;
     }
 
     public int getTokens() {

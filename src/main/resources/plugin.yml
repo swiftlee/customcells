@@ -4,3 +4,5 @@ main: com.phaseos.customcells.CustomCells
 authors: [SwiftLee]
 description: A gangs plugin, similar to ASkyblock but for prison.
 website: phaseos.com
+
+depend: [Vault]
