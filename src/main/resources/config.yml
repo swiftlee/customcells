@@ -88,13 +88,11 @@ upgrades_gui:
   cell_upgrade:
     material: 'BOOK'
     slot: 4
-    name: '&e&lCell Upgrades'
+    name: '&e&lGang Size'
     lore:
-      - '&7Use this menu to upgrade your'
-      - '&7cell with this &a&uawesome &7new perks.'
-      - ' '
-      - '&c&lWARNING: &7Any upgrades purchased will'
-      - '&7be lost if your cell is reset'
+      - '&7Building a team? Purchase'
+      - '&7this upgrade to add &a2 &7more.'
+      - '&7members to your gang.'
   cell_size:
     material: 'GRASS_BLOCK'
     slot: 12
@@ -139,6 +137,11 @@ cell:
     - '25x25'
     - '35x35'
     - '45x45'
+  prices:
+    - 10000
+    - 50000
+    - 100000
+    - 500000
 # The different sizes of the bank depending on your tier in order.
 bank:
   sizes:

@@ -8,6 +8,7 @@ import com.phaseos.utils.StringUtils;
 import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -100,6 +101,44 @@ public class InventoryClickListener implements Listener {
                     }
 
                 } else if (inventoryName.equalsIgnoreCase(plugin.getConfig().getString("upgrades_gui.title"))) {
+
+                    Gang gang = Gang.getGangFromMember(e.getWhoClicked().getUniqueId());
+                    String itemName = currItem.getItemMeta().getDisplayName();
+                    String cellUpdate = StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.cell_upgrade.name"));
+                    String cellSize = StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.cell_size.name"));
+                    String bankSize = StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.bank_size.name"));
+
+                    /* Update the repertoire of members allowed. */
+                    if (itemName.equals(cellUpdate)) {
+
+                        if (Objects.requireNonNull(gang, "gang must not be null!").getLeader().equals(e.getWhoClicked().getUniqueId())) {
+
+
+                            Location home = gang.getHome();
+                            List<String> sizes = plugin.getConfig().getStringList("cell.sizes");
+                            String dimensions = gang.getDimensions()[0] + "x" + gang.getDimensions()[1];
+                            if (sizes.get(sizes.size() - 1).equalsIgnoreCase(dimensions))
+                                e.getWhoClicked().sendMessage(StringUtils.fmt("&cYour cell is already the maximum size!"));
+                            else {
+                                // handle schematic placement
+                                // take money from user
+                                // do they have enough money?
+                            }
+
+                        } else
+                            e.getWhoClicked().sendMessage(StringUtils.fmt("&cYou do not have permission to do this."));
+
+                        /* Upgdate the size of the cell. */
+                    } else if (itemName.equals(cellSize)) {
+
+
+
+                        /* Update the size of the gang bank. */
+                    } else if (itemName.equals(bankSize)) {
+
+
+
+                    }
 
                 } else if (inventoryName.equalsIgnoreCase(plugin.getConfig().getString("cell_size.title"))) {
 
