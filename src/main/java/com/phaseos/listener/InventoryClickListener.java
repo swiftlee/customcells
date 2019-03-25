@@ -44,13 +44,18 @@ public class InventoryClickListener implements Listener {
         }
 
         String inventoryName = e.getClickedInventory().getName();
-        if (inventoryName.contains("§")) {
+        System.out.println("Inventory name: " + inventoryName);
+        if (inventoryName.startsWith("§")) {
 
             ItemStack currItem = e.getCurrentItem();
 
             if (currItem.hasItemMeta() && currItem.getItemMeta().hasDisplayName()) {
 
-                if (inventoryName.equalsIgnoreCase(plugin.getConfig().getString("gang_gui.title"))) {
+                System.out.println("has itemmeta and hasdisplayname!");
+
+                if (inventoryName.equalsIgnoreCase(StringUtils.fmt(plugin.getConfig().getString("gang_gui.title")))) {
+
+                    System.out.println("we got here");
 
                     String itemName = currItem.getItemMeta().getDisplayName();
                     final String toCell = StringUtils.fmt(plugin.getConfig().getString("gang_gui.to_cell.name"));
@@ -100,51 +105,52 @@ public class InventoryClickListener implements Listener {
 
                     }
 
-                } else if (inventoryName.equalsIgnoreCase(plugin.getConfig().getString("upgrades_gui.title"))) {
+                } else if (inventoryName.equalsIgnoreCase(StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.title")))) {
 
                     Gang gang = Gang.getGangFromMember(e.getWhoClicked().getUniqueId());
                     String itemName = currItem.getItemMeta().getDisplayName();
-                    String cellUpdate = StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.cell_upgrade.name"));
+                    String gangSize = StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.gang_size.name"));
                     String cellSize = StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.cell_size.name"));
                     String bankSize = StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.bank_size.name"));
 
                     /* Update the repertoire of members allowed. */
-                    if (itemName.equals(cellUpdate)) {
+                    if (itemName.equals(gangSize)) {
 
                         if (Objects.requireNonNull(gang, "gang must not be null!").getLeader().equals(e.getWhoClicked().getUniqueId())) {
 
-
-                            Location home = gang.getHome();
-                            List<String> sizes = plugin.getConfig().getStringList("cell.sizes");
-                            String dimensions = gang.getDimensions()[0] + "x" + gang.getDimensions()[1];
-                            if (sizes.get(sizes.size() - 1).equalsIgnoreCase(dimensions))
-                                e.getWhoClicked().sendMessage(StringUtils.fmt("&cYour cell is already the maximum size!"));
-                            else {
-                                // handle schematic placement
-                                // take money from user
-                                // do they have enough money?
-                            }
+                            System.out.println("Update the amount of members allowed!");
 
                         } else
                             e.getWhoClicked().sendMessage(StringUtils.fmt("&cYou do not have permission to do this."));
 
-                        /* Upgdate the size of the cell. */
+                        /* Update the size of the cell. */
                     } else if (itemName.equals(cellSize)) {
 
+                        System.out.println("Upgrade the cell");
+                        Location home = gang.getHome();
+                        List<String> sizes = plugin.getConfig().getStringList("cell.sizes");
+                        String dimensions = gang.getDimensions()[0] + "x" + gang.getDimensions()[1];
+                        if (sizes.get(sizes.size() - 1).equalsIgnoreCase(dimensions))
+                            e.getWhoClicked().sendMessage(StringUtils.fmt("&cYour cell is already the maximum size!"));
+                        else {
+                            // handle schematic placement
+                            // take money from user
+                            // do they have enough money?
 
+                        }
 
                         /* Update the size of the gang bank. */
                     } else if (itemName.equals(bankSize)) {
 
-
+                        System.out.println("Upgrade the size of the bank");
 
                     }
 
-                } else if (inventoryName.equalsIgnoreCase(plugin.getConfig().getString("cell_size.title"))) {
+                } else if (inventoryName.equalsIgnoreCase(StringUtils.fmt(plugin.getConfig().getString("cell_size.title")))) {
 
-                } else if (inventoryName.equalsIgnoreCase(plugin.getConfig().getString("commands_gui.title"))) {
+                } else if (inventoryName.equalsIgnoreCase(StringUtils.fmt(plugin.getConfig().getString("commands_gui.title")))) {
 
-                } else if (inventoryName.equalsIgnoreCase(plugin.getConfig().getString("permissions_gui.title"))) {
+                } else if (inventoryName.equalsIgnoreCase(StringUtils.fmt(plugin.getConfig().getString("permissions_gui.title")))) {
 
                 }
 
@@ -162,15 +168,15 @@ public class InventoryClickListener implements Listener {
 
         if (name.contains("§")) {
 
-            if (name.equalsIgnoreCase(plugin.getConfig().getString("upgrades_gui.title"))) {
+            if (name.equalsIgnoreCase(StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.title")))) {
                 openGui((Player) e.getPlayer(), CustomCells.getMainGui());
-            } else if (name.equalsIgnoreCase(plugin.getConfig().getString("commands_gui.title"))) {
+            } else if (name.equalsIgnoreCase(StringUtils.fmt(plugin.getConfig().getString("commands_gui.title")))) {
+                openGui((Player) e.getPlayer(), CustomCells.getMainGui());
+            } else if (name.equalsIgnoreCase(StringUtils.fmt(plugin.getConfig().getString("gang_gui.list_cell.name")))) {
                 openGui((Player) e.getPlayer(), CustomCells.getMainGui());
             } else if (name.matches("§eKick|§eInvite|§eLevel-ups|§ePromote|§eDemote")) {
                 openGui((Player) e.getPlayer(), CustomCells.getCommandsGui());
             }
-
-            // TODO: handle going back a page
 
         }
 

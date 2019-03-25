@@ -1,0 +1,152 @@
+messages:
+  disband: '&cAre you sure you would like to disband %gang%?\nDoing so will delete all items within the Gang Cell.'
+  invite: '&7%gang% &fhas invited you to join their criminal band.'
+
+
+gangs:
+  # Minimum gang name length
+  minLength: 3
+  # Maximum gang name length
+  maxLength: 32
+  # Max gang level
+  maxLevel: 5
+  # These gang names are not allowed
+  bannedNames:
+    - 'badWord'
+    - 'swearWord'
+  # Minimum gang size
+  minSize: 4
+  # Maximum gang size
+  maxSize: 14
+  # How many members to add per level up
+  membersPerLevel: 2
+  # Gang name formatting
+  nameFormat:
+    # Default name format
+    default: '&f[%gang%]'
+    # Gang name for gangless members
+    noGang: ''
+    # Choose if you want to use level based gang name format
+    useLevelBased: true
+    # Customizable gang name formatting dependent on level
+    levelBased:
+      1: '&a[%gang%] &f'
+      2: '&b[%gang%] &f'
+      3: '&6&l[%gang%] &f'
+      4: '&3&l[%gang%] &f'
+      5: '&e&l[%gang%] &f'
+  # How much power is required to achieve the levels listed below
+  levels:
+    2: 50
+    3: 100
+    4: 150
+    5: 250
+# Anything related to tokens and power
+economy:
+  tokens:
+    # The cost of a glowstone in Tokens
+    GLOWSTONE: 10
+    # The cost of a redstone lamp in Tokens
+    REDSTONE_LAMP_OFF: 50
+    # The cost of glass in Tokens
+    GLASS: 100
+  power:
+    # How much glowstone is worth in power
+    GLOWSTONE: 10
+    # How much redstone-lamp is worth in power
+    REDSTONE_LAMP_OFF: 50
+    # How much glass is worth in power
+    GLASS: 100
+
+# The GUI presented on execution of /g
+# Colors: white, orange, magenta, light_blue,
+# yellow, lime, pink, gray, light_gray,
+# cyan, purple, blue, brown, green, red, black
+gang_gui:
+  title: '&e&lCell Management'
+  pane_color: 'PURPLE'
+  to_cell:
+    material: 'PAPER'
+    slot: 10
+    name: '&e&lGo to cell'
+  upgrade_cell:
+    material: 'ANVIL'
+    slot: 12
+    name: '&9&lCell Upgrades'
+  list_cell:
+    material: 'SKULL_ITEM'
+    slot: 14
+    name: '&b&lGang List'
+  perms_cell:
+    material: 'IRON_FENCE'
+    slot: 16
+    name: '&d&lCell Perms'
+
+upgrades_gui:
+  title: '&e&lCell Upgrades'
+  pane_color: 'PURPLE'
+  gang_size:
+    material: 'BOOK'
+    slot: 4
+    name: '&e&lGang Size'
+    lore:
+      - '&7Building a team? Purchase'
+      - '&7this upgrade to add &a2 &7more.'
+      - '&7members to your gang.'
+  cell_size:
+    material: 'GRASS'
+    slot: 12
+    name: '&b&lCell Size'
+    lore:
+      - '&7Need more room to expand? Purchase'
+      - '&7this upgrade to increase your cell'
+      - '&7size to &e&l{upgradeCellSize}'
+      - ' '
+      - 'Current tier: &6{currentCellTier}'
+      - 'Current cell size: &6{cellSize}'
+      - 'Maximum tier: &6{maxCellTier}'
+  bank_size:
+    material: 'BIRCH_DOOR_ITEM'
+    slot: 14
+    name: '&b&lBank Size'
+    lore:
+      - '&7Need more room for all of those tokens?'
+      - '&7This upgrade allows you to hold &e&l{upgradeBankSize} &7tokens.'
+      - ' '
+      - 'Current tier: &6{currentBankTier}'
+      - 'Current size: &6{bankSize}'
+      - 'Maximum tier: &6{maxBankTier}'
+
+# The GUI for setting permissions for commands/gang actions
+commands_gui:
+  title: '&bCommands'
+  item: 'NETHER_STAR'
+  # Do not edit these, these are very specific actions that have per-player permissions assigned.
+  commands:
+    - 'KICK:&eKick:Control who can kick players.'
+    - 'INVITE:&eInvite:Control who can invite players.'
+    - 'LEVELUP:&eLevel-ups:Control who can level-up your gang.'
+    - 'REDEEM:&eToken Redemption:Control who can redeem tokens for blocks.'
+    - 'PROMOTE:&ePromote:Control who can promote members.'
+    - 'DEMOTE:&eDemote:Control who can demote members.'
+
+# The different sizes of the island depending on your tier in order.
+cell:
+  sizes:
+    - '15x15'
+    - '25x25'
+    - '35x35'
+    - '45x45'
+  prices:
+    - 10000
+    - 50000
+    - 100000
+    - 500000
+# The different sizes of the bank depending on your tier in order.
+bank:
+  sizes:
+    - 50
+    - 100
+    - 500
+    - 1000
+    - 5000

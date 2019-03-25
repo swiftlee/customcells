@@ -1,6 +1,7 @@
 package com.phaseos.gangs;
 
 import com.phaseos.customcells.CustomCells;
+import com.phaseos.island.IslandHandler;
 import com.phaseos.utils.StringUtils;
 
 import org.bukkit.Bukkit;
@@ -49,7 +50,7 @@ public class Gang {
         this.plugin = plugin;
         if (exists(gangId)) {
             this.gangId = gangId;
-            fillData();
+            fillFields();
         } else
             this.gangId = null;
     }
@@ -62,7 +63,7 @@ public class Gang {
     public Gang(UUID gangId) {
         if (exists(gangId)) {
             this.gangId = gangId;
-            fillData();
+            fillFields();
         } else
             this.gangId = null;
     }
@@ -78,7 +79,6 @@ public class Gang {
     }
 
     public static Gang getGangFromMember(UUID gangMember) {
-
         String id = gangMember.toString();
         for (String gangId : gangData.getKeys(false)) {
             if (gangData.getStringList(gangId + ".members").contains(id))
@@ -86,7 +86,15 @@ public class Gang {
         }
 
         return null;
+    }
 
+    public static Gang getGangFromName(String gangName) {
+        for (String gangId : gangData.getKeys(false)) {
+            if (gangData.getString(gangId + ".name").equalsIgnoreCase(gangName))
+                return new Gang(UUID.fromString(gangId));
+        }
+
+        return null;
     }
 
     public static Gang getGangFromId(UUID gangId) {
@@ -97,14 +105,12 @@ public class Gang {
     }
 
     public static boolean exists(UUID gangId) {
-
         return gangData.contains(gangId.toString());
-
     }
 
     public static boolean exists(String gangName) {
         for (String key : gangData.getKeys(true)) {
-            if (key.equals(gangName))
+            if (gangName.equalsIgnoreCase(gangData.getString(key + ".name")))
                 return true;
         }
         return false;
@@ -122,12 +128,13 @@ public class Gang {
      */
     public void create(String name, UUID leader) {
 
-        if (!name.matches("[^a-zA-Z0-9]") || plugin.getConfig().getStringList("gangs.bannedNames").stream().anyMatch(str -> str.equalsIgnoreCase(name))) {
+        if (name.matches("[^a-zA-Z0-9]") || plugin.getConfig().getStringList("gangs.bannedNames").stream().anyMatch(str -> str.equalsIgnoreCase(name))) {
             Bukkit.getPlayer(leader).sendMessage(StringUtils.fmt("&cInvalid gang name."));
             return;
         }
 
-        String base = UUID.randomUUID().toString() + ".";
+        this.gangId = UUID.randomUUID();
+        String base = this.gangId.toString() + ".";
 
         this.name = name;
         gangData.set(base + "name", name);
@@ -148,6 +155,9 @@ public class Gang {
 
         this.leader = leader;
         gangData.set(base + "leader", leader.toString());
+        GangMember member = new GangMember(leader);
+        member.setRank(GangMember.Rank.LEADER);
+        add(leader);
 
         List<String> gangPerms = new ArrayList<>(Arrays.asList(CustomCells.defaultPermissions));
         this.permissions = CustomCells.defaultPermissions;
@@ -161,13 +171,16 @@ public class Gang {
         this.bankSize = plugin.getConfig().getIntegerList("bank.sizes").get(0);
         gangData.set(base + "bankSize", this.bankSize);
 
+        IslandHandler islandHandler = new IslandHandler(plugin);
+        islandHandler.createIsland(Bukkit.getPlayer(leader), IslandHandler.SchematicName.SMALL.getSchematicName(), gangId);
+
         GangDatabase db = new GangDatabase();
         db.save();
         db.load();
 
     }
 
-    private void fillData() {
+    private void fillFields() {
 
         String base = gangId.toString() + ".";
         this.name = gangData.getString(base + "name");
@@ -175,7 +188,9 @@ public class Gang {
         this.tokens = gangData.getInt(base + "tokens");
         this.members = gangData.getStringList(base + "members");
         this.power = gangData.getInt(base + "power");
-        this.permissions = (String[]) gangData.getStringList(base + "permissions").toArray();
+        this.permissions = gangData.getStringList(base + "permissions").toArray(new String[0]);
+        // TODO: add this back when schematics are distributed
+        // this.home = StringUtils.parseLocation(gangData.getString(base + "home"));
         String[] dimensionStr = gangData.getString(base + "cellSize").split("x");
         for (int i = 0; i < dimensionStr.length; i++)
             this.dimensions[i] = Integer.valueOf(dimensionStr[i]);
@@ -194,6 +209,18 @@ public class Gang {
         GangDatabase db = new GangDatabase();
         db.save();
         db.load();
+    }
+
+    /**
+     * Sets the players gang.
+     */
+    public void add(UUID playerId) {
+        GangMember member = new GangMember(playerId);
+        member.setGangId(gangId);
+    }
+
+    public UUID getGangId() {
+        return gangId;
     }
 
     public int getSize() {
@@ -228,8 +255,20 @@ public class Gang {
         return home;
     }
 
-    public void setHome(Location home) {
-        this.home = home;
+    public void setHome(Location location) {
+
+        double x = location.getBlockX() + 0.5D;
+        double y = location.getBlockY() + 1;
+        double z = location.getBlockZ() + 0.5D;
+        String worldName = location.getWorld().getName();
+
+        this.home = new Location(Bukkit.getWorld(worldName), x, y, z);
+
+        gangData.set(gangId.toString() + ".home", worldName + "," + x + "," + y + "," + z);
+        GangDatabase db = new GangDatabase();
+        db.save();
+        db.load();
+
     }
 
     public int getBankSize() {

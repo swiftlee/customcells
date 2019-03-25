@@ -89,11 +89,11 @@ public class Gui {
         paneMeta.setLore(null);
         pane.setItemMeta(paneMeta);
 
-        ItemStack cellUpgrade = new ItemStack(Material.valueOf(plugin.getConfig().getString("upgrades_gui.cell_upgrade.material")), 1);
+        ItemStack cellUpgrade = new ItemStack(Material.valueOf(plugin.getConfig().getString("upgrades_gui.gang_size.material")), 1);
         ItemMeta cellUpgradeMeta = cellUpgrade.getItemMeta();
-        cellUpgradeMeta.setDisplayName(StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.cell_upgrade.name")));
+        cellUpgradeMeta.setDisplayName(StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.gang_size.name")));
         List<String> cellUpgradeLore = new ArrayList<>();
-        plugin.getConfig().getStringList("upgrades_gui.cell_upgrade.lore").forEach(str -> cellUpgradeLore.add(StringUtils.fmt(str)));
+        plugin.getConfig().getStringList("upgrades_gui.gang_size.lore").forEach(str -> cellUpgradeLore.add(StringUtils.fmt(str)));
         cellUpgradeMeta.setLore(cellUpgradeLore);
         cellUpgrade.setItemMeta(cellUpgradeMeta);
 
@@ -105,15 +105,15 @@ public class Gui {
         cellSizeMeta.setLore(cellSizeLore);
         cellSize.setItemMeta(cellSizeMeta);
 
-        ItemStack bankSize = new ItemStack(Material.valueOf(plugin.getConfig().getString("gang_gui.bank_size.material")), 1);
+        ItemStack bankSize = new ItemStack(Material.valueOf(plugin.getConfig().getString("upgrades_gui.bank_size.material")), 1);
         ItemMeta bankSizeMeta = bankSize.getItemMeta();
-        bankSizeMeta.setDisplayName(StringUtils.fmt(plugin.getConfig().getString("gang_gui.bank_size.name")));
+        bankSizeMeta.setDisplayName(StringUtils.fmt(plugin.getConfig().getString("upgrades_gui.bank_size.name")));
         List<String> bankSizeLore = new ArrayList<>();
         plugin.getConfig().getStringList("upgrades_gui.bank_size.lore").forEach(str -> bankSizeLore.add(StringUtils.fmt(str)));
         bankSizeMeta.setLore(bankSizeLore);
         bankSize.setItemMeta(bankSizeMeta);
 
-        gui.setItem(plugin.getConfig().getInt("upgrades_gui.cell_upgrade.slot"), cellUpgrade);
+        gui.setItem(plugin.getConfig().getInt("upgrades_gui.gang_size.slot"), cellUpgrade);
         gui.setItem(plugin.getConfig().getInt("upgrades_gui.cell_size.slot"), cellSize);
         gui.setItem(plugin.getConfig().getInt("upgrades_gui.bank_size.slot"), bankSize);
         fill(gui, pane);
@@ -164,7 +164,7 @@ public class Gui {
         StringBuilder invisibleLine = new StringBuilder();
 
         for (char c : line.toCharArray())
-            invisibleLine.append(StringUtils.fmt("&")).append(c);
+            invisibleLine.append("§").append(c);
 
         return String.valueOf(invisibleLine);
     }

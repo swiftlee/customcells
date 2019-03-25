@@ -10,7 +10,7 @@ public class GangEconomy {
 
     public void setup() {
         EconomyDatabase db = new EconomyDatabase();
-        db.save();
+        db.load();
     }
 
     public void save() {

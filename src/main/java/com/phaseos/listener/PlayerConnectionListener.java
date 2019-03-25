@@ -18,6 +18,8 @@ public class PlayerConnectionListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
 
+        System.out.println("Has gang: " + GangMember.hasGang(e.getPlayer().getUniqueId()));
+
         if (!GangMember.hasGang(e.getPlayer().getUniqueId()))
             GangMember.addMember(e.getPlayer().getUniqueId());
         else

@@ -1,6 +1,7 @@
 package com.phaseos.gangs;
 
 import com.phaseos.economy.GangEconomy;
+
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 public class GangMember {
 
+    private static YamlConfiguration memberData = new YamlConfiguration();
     private Rank rank = null;
     private UUID memberId = null;
     private UUID gangId = null;
@@ -17,6 +19,7 @@ public class GangMember {
     private int kills = -1;
     private int deaths = -1;
     private int assists = -1;
+    public boolean gangChat = false;
     private GangMember.MemberDatabase db;
 
     public GangMember(UUID memberId) {
@@ -42,13 +45,24 @@ public class GangMember {
     }
 
     public boolean hasPermission(String perm) {
+        //TODO: fix for ACTUAL permissions, NOT default permissions: use getPermissions()
         return Arrays.stream(Gang.getPermissionFromGroup(rank)).anyMatch(current -> current.equalsIgnoreCase(perm));
     }
 
     public static boolean hasGang(UUID memberId) {
 
         String id = memberId.toString();
-        return memberData.contains(id) && !memberData.getString(id + ".gangId").trim().equals("");
+        YamlConfiguration gangDb = Gang.GangDatabase.getYml();
+        boolean found = false;
+        for (String key : gangDb.getKeys(false)) {
+            for (String member : gangDb.getStringList(key + ".members")) {
+                if (UUID.fromString(member).equals(memberId)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        return found;
 
     }
 
@@ -67,14 +81,11 @@ public class GangMember {
 
     public static void addPlayTime(UUID memberId) {
 
-        int totalTime = memberData.getInt(memberId.toString() + ".playTime");
+        long totalTime = memberData.getLong(memberId.toString() + ".playTime");
         memberData.set(memberId.toString() + ".playTime", totalTime + (timeToSeconds(System.currentTimeMillis()) - getLastJoinTime(memberId)));
-
-    }
-
-    public boolean inGang(UUID gangId) {
-
-        return memberData.contains(memberId.toString()) && gangId.toString().equals(memberData.getString(memberId.toString() + ".gangId"));
+        MemberDatabase db = new MemberDatabase();
+        db.save();
+        db.load();
 
     }
 
@@ -106,7 +117,7 @@ public class GangMember {
         memberData.set(base + "lastJoin", timeToSeconds(System.currentTimeMillis()));
         memberData.set(base + "timePlayed", 0L);
         memberData.set(base + "rank", Rank.RECRUIT.toString());
-        memberData.set(base + "gangId", "");
+        memberData.set(base + "gangId", " ");
         memberData.set(base + "tokens", -1);
         memberData.set(base + "combat.kills", -1);
         memberData.set(base + "combat.deaths", -1);
@@ -118,9 +129,7 @@ public class GangMember {
     }
 
     private static long timeToSeconds(long millis) {
-
         return millis / 1000L;
-
     }
 
     public boolean isLeader() {
@@ -133,20 +142,17 @@ public class GangMember {
      * @param uuid is the UUID of the player.
      */
     public void fillFields(UUID uuid) {
-
-        if (!hasGang(uuid))
-            return;
-
         String id = uuid.toString();
 
-        this.rank = Rank.valueOf(memberData.getString(id + ".rank"));
+        System.out.println("Filling fields...");
+
+        this.rank = Rank.valueOf(memberData.getString(id + ".rank").toUpperCase());
         this.memberId = uuid;
-        this.gangId = UUID.fromString(memberData.getString(id + ".gangId"));
+        this.gangId = memberData.getString(id + ".gangId").trim().equals("") ? null : UUID.fromString(memberData.getString(id + ".gangId"));
         this.tokens = memberData.getInt(id + ".tokens");
         this.kills = memberData.getInt(id + ".combat.kills");
         this.deaths = memberData.getInt(id + ".combat.deaths");
         this.assists = memberData.getInt(id + ".combat.assists");
-
     }
 
     public Rank getRank() {
@@ -184,6 +190,8 @@ public class GangMember {
     public void setKills(int kills) {
         this.kills = kills;
         memberData.set(memberId.toString() + ".combat.kills", kills);
+        db.save();
+        db.load();
     }
 
     public int getDeaths() {
@@ -193,6 +201,8 @@ public class GangMember {
     public void setDeaths(int deaths) {
         this.deaths = deaths;
         memberData.set(memberId.toString() + ".combat.deaths", deaths);
+        db.save();
+        db.load();
     }
 
     public int getAssists() {
@@ -202,6 +212,8 @@ public class GangMember {
     public void setAssists(int assists) {
         this.assists = assists;
         memberData.set(memberId.toString() + ".combat.assists", assists);
+        db.save();
+        db.load();
     }
 
     public UUID getGangId() {
@@ -210,7 +222,11 @@ public class GangMember {
 
     public void setGangId(UUID gangId) {
         this.gangId = gangId;
-        memberData.set(memberId.toString() + ".gangId", gangId.toString());
+        System.out.println("Setting id to: " + gangId);
+        memberData.set(memberId.toString() + ".gangId", gangId == null ? " " : gangId.toString());
+        MemberDatabase db = new MemberDatabase();
+        db.save();
+        db.load();
     }
 
     public enum Rank {
@@ -226,10 +242,7 @@ public class GangMember {
         }
     }
 
-    private static YamlConfiguration memberData = new YamlConfiguration();
-
     public static class MemberDatabase {
-
 
         public static YamlConfiguration getYml() {
             return memberData;

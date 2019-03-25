@@ -1,0 +1,14 @@
+name: CustomCells
+version: 1.0-SNAPSHOT
+main: com.phaseos.customcells.CustomCells
+authors: [SwiftLee]
+description: A gangs plugin, similar to ASkyblock but for prison.
+website: phaseos.com
+
+depend: [Vault, WorldEdit]
+
+commands:
+   gang:
+     aliases: [g]
+   killgang:
+     aliases: [kg]

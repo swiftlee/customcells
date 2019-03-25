@@ -78,14 +78,14 @@ gang_gui:
     slot: 14
     name: '&b&lGang List'
   perms_cell:
-    material: 'IRON_BARS'
+    material: 'IRON_FENCE'
     slot: 16
     name: '&d&lCell Perms'
 
 upgrades_gui:
   title: '&e&lCell Upgrades'
   pane_color: 'PURPLE'
-  cell_upgrade:
+  gang_size:
     material: 'BOOK'
     slot: 4
     name: '&e&lGang Size'
@@ -94,7 +94,7 @@ upgrades_gui:
       - '&7this upgrade to add &a2 &7more.'
       - '&7members to your gang.'
   cell_size:
-    material: 'GRASS_BLOCK'
+    material: 'GRASS'
     slot: 12
     name: '&b&lCell Size'
     lore:
