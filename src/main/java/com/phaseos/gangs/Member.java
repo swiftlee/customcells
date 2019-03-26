@@ -1,15 +1,13 @@
 package com.phaseos.gangs;
 
-import com.phaseos.economy.GangEconomy;
-
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class GangMember {
+public class Member {
 
     private static YamlConfiguration memberData = new YamlConfiguration();
     private Rank rank = null;
@@ -20,13 +18,15 @@ public class GangMember {
     private int deaths = -1;
     private int assists = -1;
     public boolean gangChat = false;
-    private GangMember.MemberDatabase db;
+    private Member.MemberDatabase db;
+    private Queue<UUID> inviteQueue;
 
-    public GangMember(UUID memberId) {
+    public Member(UUID memberId) {
 
-        if (!hasGang(memberId))
+        if (!hasGang(memberId)) {
             addMember(memberId);
-        else
+            inviteQueue = new PriorityQueue<>();
+        } else
             fillFields(memberId);
 
         db = new MemberDatabase();
@@ -47,6 +47,14 @@ public class GangMember {
     public boolean hasPermission(String perm) {
         //TODO: fix for ACTUAL permissions, NOT default permissions: use getPermissions()
         return Arrays.stream(Gang.getPermissionFromGroup(rank)).anyMatch(current -> current.equalsIgnoreCase(perm));
+    }
+
+    public Queue<UUID> getInviteQueue() {
+        return inviteQueue;
+    }
+
+    public void clearInviteQueue() {
+        inviteQueue.clear();
     }
 
     public static boolean hasGang(UUID memberId) {
@@ -95,10 +103,10 @@ public class GangMember {
 
     public static Gang getGang(UUID playerId) {
 
-        GangMember gangMember = new GangMember(playerId);
+        Member member = new Member(playerId);
 
-        if (gangMember.gangId != null)
-            return new Gang(gangMember.gangId);
+        if (member.gangId != null)
+            return new Gang(member.gangId);
 
         return null;
 
@@ -117,15 +125,24 @@ public class GangMember {
         memberData.set(base + "lastJoin", timeToSeconds(System.currentTimeMillis()));
         memberData.set(base + "timePlayed", 0L);
         memberData.set(base + "rank", Rank.RECRUIT.toString());
+        memberData.set(base + "invites", new ArrayList<String>());
         memberData.set(base + "gangId", " ");
-        memberData.set(base + "tokens", -1);
-        memberData.set(base + "combat.kills", -1);
-        memberData.set(base + "combat.deaths", -1);
-        memberData.set(base + "combat.assists", -1);
+        memberData.set(base + "tokens", 0);
+        memberData.set(base + "combat.kills", 0);
+        memberData.set(base + "combat.deaths", 0);
+        memberData.set(base + "combat.assists", 0);
         MemberDatabase database = new MemberDatabase();
         database.save();
         database.load();
 
+    }
+
+    public void addToInviteQueue(UUID gangId) {
+        inviteQueue.add(gangId);
+        String id = memberId.toString();
+        memberData.set(id + ".invites", inviteQueue.stream().map(UUID::toString).collect(Collectors.toCollection(ArrayList::new)));
+        db.save();
+        db.load();
     }
 
     private static long timeToSeconds(long millis) {
@@ -144,10 +161,9 @@ public class GangMember {
     public void fillFields(UUID uuid) {
         String id = uuid.toString();
 
-        System.out.println("Filling fields...");
-
         this.rank = Rank.valueOf(memberData.getString(id + ".rank").toUpperCase());
         this.memberId = uuid;
+        this.inviteQueue = memberData.getStringList(id + ".invites").stream().map(UUID::fromString).collect(Collectors.toCollection(PriorityQueue::new));
         this.gangId = memberData.getString(id + ".gangId").trim().equals("") ? null : UUID.fromString(memberData.getString(id + ".gangId"));
         this.tokens = memberData.getInt(id + ".tokens");
         this.kills = memberData.getInt(id + ".combat.kills");
@@ -176,11 +192,9 @@ public class GangMember {
 
     public void setTokens(int tokens) {
         this.tokens = tokens;
-        GangEconomy.economyData.set(memberId.toString() + ".tokens", tokens);
-        GangEconomy.EconomyDatabase economyDatabase = new GangEconomy.EconomyDatabase();
-        economyDatabase.save();
-        economyDatabase.load();
-
+        memberData.set(memberId.toString() + ".tokens", tokens);
+        db.save();
+        db.load();
     }
 
     public int getKills() {

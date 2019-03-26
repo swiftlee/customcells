@@ -2,7 +2,7 @@ package com.phaseos.listener;
 
 import com.phaseos.customcells.CustomCells;
 import com.phaseos.gangs.Gang;
-import com.phaseos.gangs.GangMember;
+import com.phaseos.gangs.Member;
 import com.phaseos.utils.StringUtils;
 
 import net.milkbowl.vault.economy.Economy;
@@ -64,7 +64,7 @@ public class InventoryClickListener implements Listener {
                     final String permsCell = StringUtils.fmt(plugin.getConfig().getString("gang_gui.perms_cell.name"));
 
                     if (itemName.equals(toCell)) {
-                        Gang gang = GangMember.getGang(e.getWhoClicked().getUniqueId());
+                        Gang gang = Member.getGang(e.getWhoClicked().getUniqueId());
                         e.getWhoClicked().closeInventory();
                         e.getWhoClicked().teleport(Objects.requireNonNull(gang, "gang must not be null!").getHome(), PlayerTeleportEvent.TeleportCause.PLUGIN);
                     } else if (itemName.equals(upgradeCell)) {
@@ -72,24 +72,24 @@ public class InventoryClickListener implements Listener {
                         e.getWhoClicked().openInventory(CustomCells.getUpgradesGui());
                     } else if (itemName.equals(listCell)) {
                         e.getWhoClicked().closeInventory();
-                        Gang gang = GangMember.getGang(e.getWhoClicked().getUniqueId());
+                        Gang gang = Member.getGang(e.getWhoClicked().getUniqueId());
                         Inventory gui = Bukkit.createInventory(null, Objects.requireNonNull(gang, "gang must not be null when referencing gang size!").getSize() > 9 ? 18 : 9, listCell);
-                        Economy econ = plugin.getEcon();
+                        Economy econ = plugin.getEconomy();
 
                         int counter = 0;
                         for (String uuid : Objects.requireNonNull(gang, "gang must not be null in loop!").getMembers()) {
 
                             UUID memberId = UUID.fromString(uuid);
-                            GangMember gangMember = new GangMember(memberId);
+                            Member member = new Member(memberId);
                             ItemStack playerHead = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
                             ItemMeta playerHeadMeta = playerHead.getItemMeta();
                             playerHeadMeta.setDisplayName(Bukkit.getPlayer(memberId).getName());
                             List<String> lore = new ArrayList<>();
-                            lore.add(StringUtils.fmt("&7Gang rank: &6" + StringUtils.capitalize(gangMember.getRank().toString())));
-                            lore.add(StringUtils.fmt("&7Donator rank: &6" + StringUtils.capitalize(gangMember.getRank().toString())));
+                            lore.add(StringUtils.fmt("&7Gang rank: &6" + StringUtils.capitalize(member.getRank().toString())));
+                            lore.add(StringUtils.fmt("&7Donator rank: &6" + StringUtils.capitalize(member.getRank().toString())));
                             lore.add(StringUtils.fmt("&7Money: &6" + econ.getBalance((OfflinePlayer) e.getWhoClicked())));
-                            lore.add(StringUtils.fmt("&7Tokens: &6" + gangMember.getTokens()));
-                            lore.add(StringUtils.fmt("&7Time played: &6" + (gangMember.getTimePlayed() > 60 ? gangMember.getTimePlayed() / 3600 + "h:" + ((gangMember.getTimePlayed() % 3600) / 60) + "m" : gangMember.getTimePlayed() / 60 + "m")));
+                            lore.add(StringUtils.fmt("&7Tokens: &6" + member.getTokens()));
+                            lore.add(StringUtils.fmt("&7Time played: &6" + (member.getTimePlayed() > 60 ? member.getTimePlayed() / 3600 + "h:" + ((member.getTimePlayed() % 3600) / 60) + "m" : member.getTimePlayed() / 60 + "m")));
                             playerHeadMeta.setLore(lore);
                             playerHead.setItemMeta(playerHeadMeta);
                             gui.setItem(counter++, playerHead);

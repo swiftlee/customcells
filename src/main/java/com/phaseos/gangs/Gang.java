@@ -18,15 +18,18 @@ import java.util.UUID;
 public class Gang {
 
     private static YamlConfiguration gangData = new YamlConfiguration();
-    private int size = -1;
-    private int power = -1;
+    private int size = 0;
+    private int maximumSize = 0;
+    private int minimumSize = 0;
+    private int level = 1;
+    private int power = 0;
     private UUID gangId = null;
     private String[] permissions = null;
     private int[] dimensions = new int[2];
     private Location home;
-    private int bankSize = -1;
+    private int bankSize = 0;
     private String name = "";
-    private int tokens = -1;
+    private int tokens = 0;
     private List<String> members = null;
     private UUID leader;
     private CustomCells plugin;
@@ -41,22 +44,7 @@ public class Gang {
     }
 
     /**
-     * Use if plugin access is necessary.
-     *
-     * @param plugin the current plugin.
-     * @param gangId the gang we want to refer to.
-     */
-    public Gang(CustomCells plugin, UUID gangId) {
-        this.plugin = plugin;
-        if (exists(gangId)) {
-            this.gangId = gangId;
-            fillFields();
-        } else
-            this.gangId = null;
-    }
-
-    /**
-     * Use this if not creating a gang.
+     * Use this if attempting access an existing gang.
      *
      * @param gangId the gang we want to refer to.
      */
@@ -66,6 +54,12 @@ public class Gang {
             fillFields();
         } else
             this.gangId = null;
+    }
+
+    private void reloadGangData() {
+        GangDatabase db = new GangDatabase();
+        db.save();
+        db.load();
     }
 
     public static boolean contains(UUID gangMember) {
@@ -116,7 +110,7 @@ public class Gang {
         return false;
     }
 
-    public static String[] getPermissionFromGroup(GangMember.Rank rank) {
+    public static String[] getPermissionFromGroup(Member.Rank rank) {
         String rankStr = rank.toString();
         return (String[]) Arrays.stream(CustomCells.defaultPermissions).filter(perm -> perm.split("\\[")[0].equalsIgnoreCase(rankStr)).toArray();
     }
@@ -139,11 +133,19 @@ public class Gang {
         this.name = name;
         gangData.set(base + "name", name);
 
-        this.size = plugin.getConfig().getInt("gangs.minSize");
+        this.size = 1;
         gangData.set(base + "size", this.size);
+
+        this.maximumSize = plugin.getConfig().getInt("gangs.minSize");
+        gangData.set(base + "maximumSize", this.maximumSize);
 
         this.power = 0;
         gangData.set(base + "power", 0);
+
+        gangData.set(base + "level", 1);
+
+        this.minimumSize = maximumSize;
+        gangData.set(base + "minimumSize", maximumSize);
 
         this.tokens = 0;
         gangData.set(base + "tokens", 0);
@@ -155,8 +157,8 @@ public class Gang {
 
         this.leader = leader;
         gangData.set(base + "leader", leader.toString());
-        GangMember member = new GangMember(leader);
-        member.setRank(GangMember.Rank.LEADER);
+        Member member = new Member(leader);
+        member.setRank(Member.Rank.LEADER);
         add(leader);
 
         List<String> gangPerms = new ArrayList<>(Arrays.asList(CustomCells.defaultPermissions));
@@ -174,9 +176,7 @@ public class Gang {
         IslandHandler islandHandler = new IslandHandler(plugin);
         islandHandler.createIsland(Bukkit.getPlayer(leader), IslandHandler.SchematicName.SMALL.getSchematicName(), gangId);
 
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
 
     }
 
@@ -185,12 +185,14 @@ public class Gang {
         String base = gangId.toString() + ".";
         this.name = gangData.getString(base + "name");
         this.size = gangData.getInt(base + "size");
+        this.maximumSize = gangData.getInt(base + "maximumSize");
+        this.minimumSize = gangData.getInt(base + "minimumSize");
         this.tokens = gangData.getInt(base + "tokens");
         this.members = gangData.getStringList(base + "members");
         this.power = gangData.getInt(base + "power");
+        this.level = gangData.getInt(base + "level");
         this.permissions = gangData.getStringList(base + "permissions").toArray(new String[0]);
-        // TODO: add this back when schematics are distributed
-        // this.home = StringUtils.parseLocation(gangData.getString(base + "home"));
+        this.home = StringUtils.parseLocation(gangData.getString(base + "home"));
         String[] dimensionStr = gangData.getString(base + "cellSize").split("x");
         for (int i = 0; i < dimensionStr.length; i++)
             this.dimensions[i] = Integer.valueOf(dimensionStr[i]);
@@ -206,17 +208,18 @@ public class Gang {
     public void setPermissions(String[] permissions) {
         gangData.set(gangId.toString() + ".permissions", permissions);
         this.permissions = permissions;
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
     }
 
     /**
      * Sets the players gang.
      */
     public void add(UUID playerId) {
-        GangMember member = new GangMember(playerId);
+        Member member = new Member(playerId);
         member.setGangId(gangId);
+        this.members.add(playerId.toString());
+        gangData.set(gangId.toString() + ".members", this.members);
+        reloadGangData();
     }
 
     public UUID getGangId() {
@@ -227,15 +230,19 @@ public class Gang {
         return members.size();
     }
 
+    public int getMaximumSize() {
+        return minimumSize * (level << 1);
+    }
+
     public int getPower() {
         return power;
     }
 
+    public int getLevel() { return level; }
+
     public void setPower(int power) {
         gangData.set(gangId.toString() + ".power", power);
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
         this.power = power;
     }
 
@@ -246,9 +253,7 @@ public class Gang {
     public void setDimensions(int[] dimensions) {
         this.dimensions = dimensions;
         gangData.set(gangId.toString() + ".cellSize", dimensions[0] + "x" + dimensions[1]);
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
     }
 
     public Location getHome() {
@@ -265,9 +270,7 @@ public class Gang {
         this.home = new Location(Bukkit.getWorld(worldName), x, y, z);
 
         gangData.set(gangId.toString() + ".home", worldName + "," + x + "," + y + "," + z);
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
 
     }
 
@@ -278,9 +281,7 @@ public class Gang {
     public void setBankSize(int bankSize) {
         this.bankSize = bankSize;
         gangData.set(gangId.toString() + ".bankSize", bankSize);
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
     }
 
     public UUID getLeader() {
@@ -290,9 +291,22 @@ public class Gang {
     public void setLeader(UUID leader) {
         this.leader = leader;
         gangData.set(gangId.toString() + ".leader", leader.toString());
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
+    }
+
+    public void levelUp() {
+        if (this.level < 5) {
+            level++;
+            members.stream().map(UUID::fromString).map(Bukkit::getPlayer).filter(p -> p != null && p.isOnline())
+                    .forEach(p -> p.sendMessage(StringUtils.fmt("&7Your gang has just leveled up to level: &a" + level + " &7!")));
+        }
+    }
+
+    public boolean canLevelUp() {
+        if (this.level == 5)
+            return false;
+
+        return power >= CustomCells.gangLevels[level - 1];
     }
 
     public String getName() {
@@ -302,9 +316,7 @@ public class Gang {
     public void setName(String name) {
         this.name = name;
         gangData.set(gangId.toString() + ".name", name);
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
     }
 
     public List<String> getMembers() {
@@ -314,9 +326,7 @@ public class Gang {
     public void setMembers(List<String> members) {
         this.members = members;
         gangData.set(gangId.toString() + ".members", members);
-        GangDatabase db = new GangDatabase();
-        db.save();
-        db.load();
+        reloadGangData();
     }
 
     public static class GangDatabase {

@@ -1,7 +1,7 @@
 package com.phaseos.listener;
 
 import com.phaseos.customcells.CustomCells;
-import com.phaseos.gangs.GangMember;
+import com.phaseos.gangs.Member;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -33,14 +33,18 @@ public class ChatListener implements Listener {
 
     private CustomCells plugin;
 
+    public ChatListener(CustomCells plugin) {
+        this.plugin = plugin;
+    }
+
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent e) {
-        GangMember member = new GangMember(e.getPlayer().getUniqueId());
+        Member member = new Member(e.getPlayer().getUniqueId());
         if (member.gangChat) {
             if (member.getGangId() == null)
                 return;
 
-            for (String uuid : Objects.requireNonNull(GangMember.getGang(member.getGangId()), "gang must not be null").getMembers()) {
+            for (String uuid : Objects.requireNonNull(Member.getGang(member.getGangId()), "gang must not be null").getMembers()) {
                 UUID id = UUID.fromString(uuid);
                 Bukkit.getPlayer(id).sendMessage("&7(%cellgangss_name%) %player% » " + e.getMessage());
             }

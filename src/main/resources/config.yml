@@ -1,6 +1,8 @@
 messages:
   disband: '&cAre you sure you would like to disband %gang%?\nDoing so will delete all items within the Gang Cell.'
-  invite: '&7%gang% &fhas invited you to join their criminal band.'
+  disbandClickableText: "CONFIRM"
+  # Surround with '%' to make any portion of the text here clickable.
+  invite: '&6%gang% &7has invited you to join their criminal band. Click %&ahere% &7to join.\nYou can also type: &a/g accept &7to join.'
 
 
 gangs:

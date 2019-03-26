@@ -5,11 +5,13 @@ import com.phaseos.command.Command;
 import com.phaseos.command.PlayerCommand;
 import com.phaseos.customcells.CustomCells;
 import com.phaseos.gangs.Gang;
-import com.phaseos.gangs.GangMember;
+import com.phaseos.gangs.Member;
 import com.phaseos.utils.MapUtil;
 import com.phaseos.utils.StringUtils;
 
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 
 import org.bukkit.Bukkit;
@@ -17,12 +19,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
 
 enum Permission {
     HELP, LIST, TOP, INFO,
@@ -109,7 +108,7 @@ public class GangCommand extends Command {
             for (String memberId : gang.getMembers()) {
 
                 UUID id = UUID.fromString(memberId);
-                GangMember member = new GangMember(id);
+                Member member = new Member(id);
                 Player p = Bukkit.getPlayer(id);
                 if (p != null && p.isOnline()) {
                     if (member.isLeader())
@@ -118,7 +117,7 @@ public class GangCommand extends Command {
                         p.sendMessage(StringUtils.fmt("&7Your gang: &6" + gang.getName() + " &7has been disbanded."));
                 }
                 member.setGangId(null); // TODO: make sure this is set in the config
-                member.setRank(GangMember.Rank.RECRUIT);
+                member.setRank(Member.Rank.RECRUIT);
 
             }
 
@@ -164,7 +163,7 @@ public class GangCommand extends Command {
 
             Player p = (Player) sender;
 
-            if (!GangMember.hasGang(p.getUniqueId())) {
+            if (!Member.hasGang(p.getUniqueId())) {
                 p.sendMessage(StringUtils.fmt("&cYou are not in a gang!"));
                 return;
             }
@@ -380,7 +379,7 @@ public class GangCommand extends Command {
 
             if (ap.hasExactly(1)) {
 
-                if (!GangMember.hasGang(player.getUniqueId())) {
+                if (!Member.hasGang(player.getUniqueId())) {
 
                     if (!Gang.exists(ap.get(1))) {
                         Gang gang = new Gang(plugin);
@@ -414,8 +413,8 @@ public class GangCommand extends Command {
                 return;
             }
 
-            if (GangMember.hasGang(player.getUniqueId())) {
-                GangMember member = new GangMember(player.getUniqueId());
+            if (Member.hasGang(player.getUniqueId())) {
+                Member member = new Member(player.getUniqueId());
                 if (member.isLeader()) {
                     player.sendMessage(StringUtils.fmt("&cAre you sure you want to disband your current gang?"));
                     TextComponent msg = new TextComponent(StringUtils.fmt("&e&lCONFIRM"));
@@ -448,6 +447,49 @@ public class GangCommand extends Command {
                 return;
             }
 
+            if (ap.hasExactly(1)) {
+                if (Member.hasGang(player.getUniqueId())) {
+                    Gang gang = Gang.getGangFromMember(player.getUniqueId());
+                    if (gang.getMaximumSize() == gang.getSize()) {
+                        Player target = ap.getPlayer(1);
+                        if (Member.hasGang(target.getUniqueId())) {
+                            target.sendMessage(StringUtils.fmt("&7Player with name &6" + target.getName() + " &7is already in a gang."));
+                            return;
+                        }
+                        String[] splitMsg = plugin.getConfig().getString("messages.invite").split("%\\w+\\s?.*?%", 1);
+                        String delim = plugin.getConfig().getString("messages.invite").split("%")[1];
+                        Member member = new Member(target.getUniqueId());
+                        BaseComponent[] msg = new ComponentBuilder(StringUtils.fmt(splitMsg[0])).append(StringUtils.fmt(delim)).event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/g join")).append(StringUtils.fmt(splitMsg[1])).create();
+                        member.addToInviteQueue(gang.getGangId());
+                        target.spigot().sendMessage(msg);
+
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+
+                                if (member.getInviteQueue().contains(gang.getGangId())) {
+
+                                    if (player.isOnline())
+                                        player.sendMessage(StringUtils.fmt("&7Your invite to &6" + player.getName() + " &7has expired."));
+                                    if (target.isOnline())
+                                        player.sendMessage(StringUtils.fmt("&7Your invite from &6" + gang.getName() + " &7has expired."));
+
+                                    member.getInviteQueue().remove();
+                                }
+                            }
+                        }.runTaskLater(plugin, 20 * 120);
+
+                    } else {
+                        if (gang.getLevel() < 5)
+                            player.sendMessage(StringUtils.fmt("&7You cannot invite anymore members, try upgrading via: &6/g&7!"));
+                        else
+                            player.sendMessage(StringUtils.fmt("&7Your gang cannot hold anymore members, it has reached maximum capacity."));
+                    }
+                } else
+                    player.sendMessage(StringUtils.fmt("&cYou are not in a gang!"));
+            } else
+                player.sendMessage(StringUtils.fmt("&cInvalid format, try: /g invite <name>"));
+
         }
 
     }
@@ -468,6 +510,20 @@ public class GangCommand extends Command {
                 return;
             }
 
+            if (!Member.hasGang(player.getUniqueId())) {
+                Member member = new Member(player.getUniqueId());
+                Gang gang = new Gang(member.getInviteQueue().peek());
+                if (gang.getGangId() == null) {
+                    player.sendMessage(StringUtils.fmt("&7This gang has been disbanded and is no longer joinable."));
+                    return;
+                }
+                gang.add(player.getUniqueId());
+                member.clearInviteQueue();
+                gang.getMembers().stream().map(UUID::fromString).map(Bukkit::getPlayer).filter(p -> p != null && p.getUniqueId().equals(player.getUniqueId()) && p.isOnline())
+                        .forEach(p -> p.sendMessage(StringUtils.fmt("&6" + player.getName() + " &7has joined the gang!")));
+            } else
+                player.sendMessage(StringUtils.fmt("&cYou are already in a gang!"));
+
         }
 
     }
@@ -487,6 +543,28 @@ public class GangCommand extends Command {
                 player.sendMessage(StringUtils.fmt("&cYou do not have permission to use this command!"));
                 return;
             }
+
+            if (ap.hasExactly(1)) {
+
+                if (Member.hasGang(player.getUniqueId())) {
+                    Player target = ap.getPlayer(1);
+                    Member member = new Member(target.getUniqueId());
+                    UUID retractingGang = new Member(player.getUniqueId()).getGangId();
+
+                    for (Iterator<UUID> iterator = member.getInviteQueue().iterator(); iterator.hasNext(); ) {
+                        UUID gangId = iterator.next();
+                        if (gangId.equals(retractingGang)) {
+                            iterator.remove();
+                            player.sendMessage(StringUtils.fmt("&7Successfully uninvited &6" + target.getName() + "&7."));
+                            target.sendMessage(StringUtils.fmt("&7You have been uninvited from &6" + new Gang(retractingGang).getName() + "&7."));
+                            return;
+                        }
+                    }
+
+                } else
+                    player.sendMessage(StringUtils.fmt("&cYou are not in a gang!"));
+            } else
+                player.sendMessage(StringUtils.fmt("&cInvalid format, try: /g uninvite <name>"));
 
         }
 
@@ -646,9 +724,9 @@ public class GangCommand extends Command {
             if (!player.hasPermission(perm)) {
                 player.sendMessage(StringUtils.fmt("&cYou do not have permission to use this command!"));
                 return;
-            } else if (GangMember.hasGang(player.getUniqueId())) {
+            } else if (Member.hasGang(player.getUniqueId())) {
 
-                Gang gang = GangMember.getGang(player.getUniqueId());
+                Gang gang = Member.getGang(player.getUniqueId());
                 player.sendMessage(StringUtils.fmt("&6Teleporting home..."));
                 player.teleport(gang.getHome(), PlayerTeleportEvent.TeleportCause.PLUGIN);
 

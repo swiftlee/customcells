@@ -2,9 +2,8 @@ package com.phaseos.customcells;
 
 import com.phaseos.cmds.GangCommand;
 import com.phaseos.command.Commands;
-import com.phaseos.economy.GangEconomy;
 import com.phaseos.gangs.Gang;
-import com.phaseos.gangs.GangMember;
+import com.phaseos.gangs.Member;
 import com.phaseos.listener.InventoryClickListener;
 import com.phaseos.listener.PlayerConnectionListener;
 import com.phaseos.schematic.SchematicManager;
@@ -25,11 +24,11 @@ import java.util.logging.Logger;
 public final class CustomCells extends JavaPlugin {
 
     public static String[] defaultPermissions;
+    public static int[] gangLevels;
     private static Inventory mainGui;
     private static Inventory upgradesGui;
     private static Inventory commandsGui;
     private Commands commands;
-    private GangEconomy economy = null;
     private Economy econ = null;
     private SchematicManager schematicManager;
 
@@ -65,12 +64,9 @@ public final class CustomCells extends JavaPlugin {
         /**
          * Save resources and necessary YMLs
          */
-        getEconomy().setup();
         Gang.GangDatabase gangDb = new Gang.GangDatabase();
-
         gangDb.load();
-        GangMember.MemberDatabase memberDb = new GangMember.MemberDatabase();
-
+        Member.MemberDatabase memberDb = new Member.MemberDatabase();
         memberDb.load();
 
 
@@ -86,6 +82,13 @@ public final class CustomCells extends JavaPlugin {
             reloadConfig();
         else
             saveDefaultConfig();
+
+        gangLevels = new int[]{
+                getConfig().getInt("gangs.levels.2"),
+                getConfig().getInt("gangs.levels.3"),
+                getConfig().getInt("gangs.levels.4"),
+                getConfig().getInt("gangs.levels.5")
+        };
 
         /**
          * Setup default permissions for new gangs.
@@ -117,19 +120,14 @@ public final class CustomCells extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        getEconomy().save();
         Gang.GangDatabase db = new Gang.GangDatabase();
-        GangMember.MemberDatabase memberDb = new GangMember.MemberDatabase();
+        Member.MemberDatabase memberDb = new Member.MemberDatabase();
         db.save();
         memberDb.save();
 
     }
 
-    public GangEconomy getEconomy() {
-        return economy == null ? economy = new GangEconomy() : economy;
-    }
-
-    public Economy getEcon() {
+    public Economy getEconomy() {
         return econ;
     }
 
