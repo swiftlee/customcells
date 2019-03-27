@@ -19,13 +19,13 @@ public class Member {
     private int assists = -1;
     public boolean gangChat = false;
     private Member.MemberDatabase db;
-    private Queue<UUID> inviteQueue;
+    private Set<UUID> inviteList;
 
     public Member(UUID memberId) {
 
         if (!hasGang(memberId)) {
             addMember(memberId);
-            inviteQueue = new PriorityQueue<>();
+            inviteList = new HashSet<>();
         } else
             fillFields(memberId);
 
@@ -38,7 +38,6 @@ public class Member {
             Gang gang = Gang.getGangFromId(gangId);
             if (gang != null)
                 return gang.getPermissions();
-
         }
 
         return null;
@@ -49,17 +48,16 @@ public class Member {
         return Arrays.stream(Gang.getPermissionFromGroup(rank)).anyMatch(current -> current.equalsIgnoreCase(perm));
     }
 
-    public Queue<UUID> getInviteQueue() {
-        return inviteQueue;
+    public Set<UUID> getInviteList() {
+        return inviteList;
     }
 
-    public void clearInviteQueue() {
-        inviteQueue.clear();
+    public void clearInviteList() {
+        inviteList.clear();
     }
 
     public static boolean hasGang(UUID memberId) {
 
-        String id = memberId.toString();
         YamlConfiguration gangDb = Gang.GangDatabase.getYml();
         boolean found = false;
         for (String key : gangDb.getKeys(false)) {
@@ -81,20 +79,15 @@ public class Member {
         database.load();
     }
 
-    public static long getLastJoinTime(UUID memberId) {
-
-        return memberData.getLong(memberId.toString() + ".lastJoin");
-
-    }
+    public static long getLastJoinTime(UUID memberId) { return memberData.getLong(memberId.toString() + ".lastJoin"); }
 
     public static void addPlayTime(UUID memberId) {
 
         long totalTime = memberData.getLong(memberId.toString() + ".playTime");
         memberData.set(memberId.toString() + ".playTime", totalTime + (timeToSeconds(System.currentTimeMillis()) - getLastJoinTime(memberId)));
-        MemberDatabase db = new MemberDatabase();
-        db.save();
-        db.load();
-
+        MemberDatabase database = new MemberDatabase();
+        database.save();
+        database.load();
     }
 
     public int getTimePlayed() {
@@ -137,12 +130,11 @@ public class Member {
 
     }
 
-    public void addToInviteQueue(UUID gangId) {
-        inviteQueue.add(gangId);
+    public void addToInviteList(UUID gangId) {
+        inviteList.add(gangId);
         String id = memberId.toString();
-        memberData.set(id + ".invites", inviteQueue.stream().map(UUID::toString).collect(Collectors.toCollection(ArrayList::new)));
-        db.save();
-        db.load();
+        memberData.set(id + ".invites", inviteList.stream().map(UUID::toString).collect(Collectors.toCollection(ArrayList::new)));
+        reloadMemberData();
     }
 
     private static long timeToSeconds(long millis) {
@@ -163,7 +155,7 @@ public class Member {
 
         this.rank = Rank.valueOf(memberData.getString(id + ".rank").toUpperCase());
         this.memberId = uuid;
-        this.inviteQueue = memberData.getStringList(id + ".invites").stream().map(UUID::fromString).collect(Collectors.toCollection(PriorityQueue::new));
+        this.inviteList = memberData.getStringList(id + ".invites").stream().map(UUID::fromString).collect(Collectors.toCollection(HashSet::new));
         this.gangId = memberData.getString(id + ".gangId").trim().equals("") ? null : UUID.fromString(memberData.getString(id + ".gangId"));
         this.tokens = memberData.getInt(id + ".tokens");
         this.kills = memberData.getInt(id + ".combat.kills");
@@ -178,8 +170,7 @@ public class Member {
     public void setRank(Rank rank) {
         this.rank = rank;
         memberData.set(memberId.toString() + ".rank", rank.toString());
-        db.save();
-        db.load();
+        reloadMemberData();
     }
 
     public UUID getMemberId() {
@@ -193,8 +184,7 @@ public class Member {
     public void setTokens(int tokens) {
         this.tokens = tokens;
         memberData.set(memberId.toString() + ".tokens", tokens);
-        db.save();
-        db.load();
+        reloadMemberData();
     }
 
     public int getKills() {
@@ -204,8 +194,7 @@ public class Member {
     public void setKills(int kills) {
         this.kills = kills;
         memberData.set(memberId.toString() + ".combat.kills", kills);
-        db.save();
-        db.load();
+        reloadMemberData();
     }
 
     public int getDeaths() {
@@ -215,8 +204,7 @@ public class Member {
     public void setDeaths(int deaths) {
         this.deaths = deaths;
         memberData.set(memberId.toString() + ".combat.deaths", deaths);
-        db.save();
-        db.load();
+        reloadMemberData();
     }
 
     public int getAssists() {
@@ -226,8 +214,7 @@ public class Member {
     public void setAssists(int assists) {
         this.assists = assists;
         memberData.set(memberId.toString() + ".combat.assists", assists);
-        db.save();
-        db.load();
+        reloadMemberData();
     }
 
     public UUID getGangId() {
@@ -238,7 +225,10 @@ public class Member {
         this.gangId = gangId;
         System.out.println("Setting id to: " + gangId);
         memberData.set(memberId.toString() + ".gangId", gangId == null ? " " : gangId.toString());
-        MemberDatabase db = new MemberDatabase();
+        reloadMemberData();
+    }
+    
+    private void reloadMemberData() {
         db.save();
         db.load();
     }
@@ -253,6 +243,10 @@ public class Member {
             else if (this == COLEADER) return "coleader";
             else if (this == LEADER) return "leader";
             else return "";
+        }
+
+        public boolean isLessThan(Rank rank) {
+            // comparator
         }
     }
 

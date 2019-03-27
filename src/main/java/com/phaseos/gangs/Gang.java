@@ -62,14 +62,13 @@ public class Gang {
         db.load();
     }
 
-    public static boolean contains(UUID gangMember) {
-        String id = gangMember.toString();
-        for (String gangId : gangData.getKeys(false)) {
-            if (gangData.getStringList(gangId + ".members").contains(id))
-                return true;
+    public boolean contains(UUID gangMember) {
+        if (this.gangId == null)
+            return false;
+        else {
+            String id = gangMember.toString();
+            return gangData.getStringList(this.gangId.toString() + ".members").contains(id);
         }
-
-        return false;
     }
 
     public static Gang getGangFromMember(UUID gangMember) {
@@ -214,12 +213,22 @@ public class Gang {
     /**
      * Sets the players gang.
      */
-    public void add(UUID playerId) {
-        Member member = new Member(playerId);
+    public void add(UUID memberId) {
+        Member member = new Member(memberId);
         member.setGangId(gangId);
-        this.members.add(playerId.toString());
+        this.members.add(memberId.toString());
         gangData.set(gangId.toString() + ".members", this.members);
         reloadGangData();
+    }
+
+    /**
+     * Removes a player from the current gang instance.
+     * @param memberId the memberId to remove.
+     */
+    public void removeMember(UUID memberId) {
+        this.members.remove(memberId.toString());
+        new Member(memberId).setGangId(null);
+        setMembers(members);
     }
 
     public UUID getGangId() {
@@ -238,7 +247,9 @@ public class Gang {
         return power;
     }
 
-    public int getLevel() { return level; }
+    public int getLevel() {
+        return level;
+    }
 
     public void setPower(int power) {
         gangData.set(gangId.toString() + ".power", power);
